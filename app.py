@@ -53,7 +53,6 @@ data = [
     {"ProgramNo": 61, "Cap": 53.0, "EtKalinligi": 1.5, "KaynakModel": "SC171A", "Mode": "KAYNAK", "KaynakTipi": "BORU+BORU"},
     {"ProgramNo": 70, "Cap": 18.0, "EtKalinligi": 1.5, "KaynakModel": "SATP-80", "Mode": "KAYNAK+TEL", "KaynakTipi": "BORU+FLANŞ"},
     {"ProgramNo": 71, "Cap": 18.0, "EtKalinligi": 1.5, "KaynakModel": "SATP-80", "Mode": "KAYNAK", "KaynakTipi": "BORU+FLANŞ"},
-    {"ProgramNo": 72, "Cap": 53.0, "EtKalinligi": 2.0, "KaynakModel": "SATP-80", "Mode": "KAYNAK", "KaynakTipi": "BORU+BORU"}
     
 ]
 
