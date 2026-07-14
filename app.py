@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 
-# Sayfa ayarları (Tarayıcı sekmesi başlığı ve genişlik)
+# Sayfa ayarları
 st.set_page_config(page_title="SASL-300 Program Seçici", layout="centered")
 
-# Tablodaki verilerin Python listesi olarak tanımlanması
+# Veri seti
 data = [
     {"ProgramNo": 0, "Cap": 25.0, "EtKalinligi": 2.0, "KaynakModel": "SATP-80", "Mode": "KAYNAK", "KaynakTipi": "DANONDE"},
     {"ProgramNo": 1, "Cap": 15.0, "EtKalinligi": 1.5, "KaynakModel": "SATP-80", "Mode": "KAYNAK+TEL", "KaynakTipi": "YOK"},
@@ -57,43 +57,61 @@ data = [
 
 # Veriyi Pandas DataFrame'e çevirme
 df = pd.DataFrame(data)
+df_filtered = df.copy() # Filtreleme yapacağımız kopya tablo
 
 # --- ARAYÜZ TASARIMI ---
 st.title("🔧 SASL-300 Program Seçici")
-st.markdown("Cihazınızdaki parçaya uygun kriterleri aşağıdan seçiniz.")
+st.markdown("Kriterleri sırasıyla seçin. Seçim yaptıkça aşağıdaki liste otomatik güncellenecektir.")
 st.divider()
 
-# Benzersiz (unique) ve sıralı (sorted) seçenekleri oluşturma
-cap_options = sorted(df['Cap'].unique())
-et_options = sorted(df['EtKalinligi'].unique())
-model_options = sorted(df['KaynakModel'].unique())
-mode_options = sorted(df['Mode'].unique())
-tip_options = sorted(df['KaynakTipi'].unique())
+# Sütun yapısı kullanarak tasarımı daha kompakt hale getirelim (Yan yana kutular)
+col1, col2 = st.columns(2)
 
-# Streamlit Selectbox (Açılır Kutu) ile form elemanları
-cap = st.selectbox("Çap (mm):", cap_options)
-et = st.selectbox("Et Kalınlığı (mm):", et_options)
-model = st.selectbox("Kaynak Model:", model_options)
-mode = st.selectbox("Mode:", mode_options)
-tip = st.selectbox("Kaynak Tipi:", tip_options)
+with col1:
+    # 1. ADIM: Kaynak Model Seçimi (Boş başlayacak)
+    model_options = sorted(df_filtered['KaynakModel'].unique())
+    model = st.selectbox("Kaynak Model:", model_options, index=None, placeholder="Tümü (Seçiniz)")
+    if model: # Eğer bir model seçildiyse tabloyu daralt
+        df_filtered = df_filtered[df_filtered['KaynakModel'] == model]
+
+    # 3. ADIM: Mode Seçimi
+    mode_options = sorted(df_filtered['Mode'].unique())
+    mode = st.selectbox("Mode:", mode_options, index=None, placeholder="Tümü (Seçiniz)")
+    if mode:
+        df_filtered = df_filtered[df_filtered['Mode'] == mode]
+
+    # 5. ADIM: Et Kalınlığı Seçimi
+    et_options = sorted(df_filtered['EtKalinligi'].unique())
+    et = st.selectbox("Et Kalınlığı (mm):", et_options, index=None, placeholder="Tümü (Seçiniz)")
+    if et:
+        df_filtered = df_filtered[df_filtered['EtKalinligi'] == et]
+
+with col2:
+    # 2. ADIM: Kaynak Tipi Seçimi
+    tip_options = sorted(df_filtered['KaynakTipi'].unique())
+    tip = st.selectbox("Kaynak Tipi:", tip_options, index=None, placeholder="Tümü (Seçiniz)")
+    if tip:
+        df_filtered = df_filtered[df_filtered['KaynakTipi'] == tip]
+
+    # 4. ADIM: Çap Seçimi
+    cap_options = sorted(df_filtered['Cap'].unique())
+    cap = st.selectbox("Çap (mm):", cap_options, index=None, placeholder="Tümü (Seçiniz)")
+    if cap:
+        df_filtered = df_filtered[df_filtered['Cap'] == cap]
 
 st.divider()
 
-# Buton ve Arama Mantığı
-if st.button("Uygun Programı Bul", use_container_width=True):
-    
-    # Pandas ile çoklu filtreleme işlemi
-    sonuc = df[
-        (df['Cap'] == cap) & 
-        (df['EtKalinligi'] == et) & 
-        (df['KaynakModel'] == model) & 
-        (df['Mode'] == mode) & 
-        (df['KaynakTipi'] == tip)
-    ]
-    
-    # Sonuç ekranı
-    if not sonuc.empty:
-        bulunan_program = sonuc.iloc[0]['ProgramNo']
+# --- CANLI TABLO GÖRÜNÜMÜ ---
+st.subheader("📋 Uygun Program Listesi")
+
+# Eğer filtrelemeler sonucunda hiç veri kalmadıysa uyarı ver
+if df_filtered.empty:
+    st.warning("❌ Bu kriterlere uygun bir program kaydı bulunamadı!")
+else:
+    # İnteraktif tabloyu ekrana yazdır (index numaralarını gizleyerek temiz görünüm sağladık)
+    st.dataframe(df_filtered, use_container_width=True, hide_index=True)
+
+    # Eğer seçimler listeyi tek bir programa kadar düşürdüyse dev bir başarı mesajı göster
+    if len(df_filtered) == 1:
+        bulunan_program = df_filtered.iloc[0]['ProgramNo']
         st.success(f"✅ KULLANILACAK PROGRAM NO: **{bulunan_program}**")
-    else:
-        st.error("❌ Bu kriterlere uygun bir program kaydı bulunamadı!")
